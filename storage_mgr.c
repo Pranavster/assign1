@@ -131,7 +131,7 @@ int main()
 
 extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
-    if (!isPgeNumberValid(Pagenum, fHandle))   //verify the page number
+    if (!isPageNumberValid(PageNum, fHandle))   //verify the page number
     {
        return RC_WRITE_ERROR;   //if the page is incorrect return the error code
     }

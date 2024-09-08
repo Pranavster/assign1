@@ -129,3 +129,73 @@ int main()
     printf("%d",getBlockPos(&fHandle2));
 }
 
+extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
+{
+    if (!isPgeNumberValid(Pagenum, fHandle))   //verify the page number
+    {
+       return RC_WRITE_ERROR;   //if the page is incorrect return the error code
+    }
+    FILE *fgroup8 = fopen(fHandle->fileName, "r+")   //use the read/write mode to open the file
+    if (fgroup8 == NULL)   //verify that the file was successfully opened
+    {
+       return RC_FILE_NOT_FOUND;
+    }
+
+    char *bufferPtr = memPage;   //a pointer to the start of the memory page
+    for (int index = 0; index < PAGE_SIZE; index++)   //loop through each byte in the page
+    {
+       if (fputc(*bufferPtr, fgroup8) == EOF)
+       {
+          fclose(fgroup8);  //close the file if writing fails
+          return RC_WRITE_ERROR;
+       }
+       bufferPtr++;
+    }
+    fHandle->curPagePos = ftell(fgroup8);
+    fclose(fgroup8);
+
+    return RC_OK;
+}
+
+
+extern RC WriteCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle *memPage)
+{
+    int currentPageNumber = fHandle->curPagePos / PAGE_SIZE;   //Determine the current page's index by using the file position as a guide
+
+    char *bufferPtr = memPage;   //Set bufferPtr to point to the start of memPage
+    for (int index = 0; index < PAGE_SIZE; index++)
+    {
+       if (fputc(*bufferPtr, fgroup8) == EOF)
+       {
+          return RC_WRITE_ERROR;   //Return an error code if the write operation fails
+       }
+       bufferPtr++;
+    }
+    fHandle->curPagePos += PAGE_SIZE;   //Move the file position indication by one page's worth
+    fHandle->totalNumPages++;
+    return RC_OK;
+}
+
+
+extern RC apendEmptyBlock(SM_FileHandle *fHandle)
+{
+    SM_PageHandle emptyBlock = (SM_PageHandle)calloc(PAGE_SIZE, sizeof(char));   //Set memory to zero and allocate space for a data page
+    char *blockPtr = emptyBlock;   //Assign blockPtr to the start of the recently allocated memory block
+    for (int index = 0; index < PAGE_SIZE; index++)
+    {
+       if (fputc(0, fgroup8) == EOF)   //In order to detect write failures, write a zero byte to the file
+       {
+          free(emptyBlock);
+          return RC_WRITE_ERROR;   //In order to signal the write failure, return an error code
+       }
+       blockPtr++;
+    }
+    fHandle->totalNumPages++;   // Increase the file handle's total amount of pages
+    free(emptyBlock);
+
+    return RC_OK;
+}
+    
+
+
+           

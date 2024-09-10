@@ -129,6 +129,19 @@ int main()
     printf("%d",getBlockPos(&fHandle2));
 }
 
+extern RC readLastBlock(SM_FileHandle *fHandle, SM_PageHandle *memPage)
+{
+    if (fHandle->totalNumPages == 0)   //Verify that the file handle has 0 pages in total
+    {
+       return RC_PAGE_NOT_FOUND_ERROR;
+    }
+    return readBlock(fHandle->totalNumPages - 1, fHandle, memPage);
+}
+int isPageNumberValid(int pageNum, SM_FileHandle *fHandle)   //given page number is valid within the file handle's total number of pages
+(
+    return (pageNum >= fHandle->totalNumPages || pageNum < 0) ? 0 : 1;   //Return 0 if invalid, 1 if valid
+}
+
 extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
     if (!isPageNumberValid(PageNum, fHandle))   //verify the page number
@@ -194,6 +207,32 @@ extern RC apendEmptyBlock(SM_FileHandle *fHandle)
     free(emptyBlock);
 
     return RC_OK;
+}
+
+extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
+{
+    if (numberOfPages > fHandle->totalNumPages)
+    {
+        FILE *fgroup8 = fopen(fHandle->fileName, "r+");
+        if (fgroup8 == NULL)
+        {
+            return RC_FILE_NOT_FOUND_ERROR; 
+        }
+
+        while (fHandle->totalNumPages < numberOfPages)
+        {
+            RC result = appendEmptyBlock(fHandle);
+            if (result != RC_OK)
+            {
+                fclose(fgroup8); 
+                return result; 
+            }
+        }
+
+        fclose(fgroup8);
+    }
+
+    return RC_OK; 
 }
     
 

@@ -49,7 +49,7 @@ RC openPageFile(char *fileName, SM_FileHandle *fHandle)
 }
 RC closePageFile(SM_FileHandle *fHandle)
 {
-    if(fHandle->mgmtInfo == NULL)//if the file is non existent or closing it did not work, return RC_FILE_HANDLE_NOT_INIT or RC_FILE_NOT_CLOSED, respectively
+    if(fHandle->mgmtInfo == NULL)//if the file is non existent or closing it did not work, return RC_FILE_HANDLE_NOT_INIT or RC_FILE_NOT_FOUND, respectively
     {
         printf("Null management Info");
         return RC_FILE_HANDLE_NOT_INIT;
@@ -57,7 +57,7 @@ RC closePageFile(SM_FileHandle *fHandle)
     else if(fclose((FILE *)(fHandle->mgmtInfo))!=0)//closes the file
     {
         printf("Null management Info");
-        return RC_FILE_NOT_CLOSED;
+        return RC_FILE_NOT_FOUND;
     }
     fHandle->mgmtInfo = NULL;
     return RC_OK;
@@ -71,9 +71,9 @@ RC destroyPageFile(char *fileName)
     {
         return result;
     }
-    if(closePageFile(&fHandle) != RC_OK)//close the page and return RC_FILE_NOT_CLOSED if there was a failure
+    if(closePageFile(&fHandle) != RC_OK)//close the page and return RC_FILE_NOT_FOUND if there was a failure
     {
-        return RC_FILE_NOT_CLOSED;
+        return RC_FILE_NOT_FOUND;
     }
     if(remove(fileName)!=0)//remove the page and return RC_FILE_NOT_FOUND if there was a failure
     {
@@ -129,27 +129,26 @@ int main()
     printf("%d",getBlockPos(&fHandle2));
 }
 
-extern RC readLastBlock(SM_FileHandle *fHandle, SM_PageHandle *memPage)
+extern RC readLastBlock(SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
     if (fHandle->totalNumPages == 0)   //Verify that the file handle has 0 pages in total
     {
-       return RC_PAGE_NOT_FOUND_ERROR;
+       return RC_READ_NON_EXISTING_PAGE;
     }
     return readBlock(fHandle->totalNumPages - 1, fHandle, memPage);
 }
 int isPageNumberValid(int pageNum, SM_FileHandle *fHandle)   //given page number is valid within the file handle's total number of pages
-(
-    return (pageNum >= fHandle->totalNumPages || pageNum < 0) ? 0 : 1;   //Return 0 if invalid, 1 if valid
+{
+    return((pageNum >= fHandle->totalNumPages || pageNum < 0) ? 0 : 1);   //Return 0 if invalid, 1 if valid
 }
-
 extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
     if (!isPageNumberValid(PageNum, fHandle))   //verify the page number
     {
-       return RC_WRITE_ERROR;   //if the page is incorrect return the error code
+       return RC_WRITE_FAILED;   //if the page is incorrect return the error code
     }
-    FILE *fgroup8 = fopen(fHandle->fileName, "r+")   //use the read/write mode to open the file
-    if (fgroup8 == NULL)   //verify that the file was successfully opened
+    FILE *fgroup8 = fopen(fHandle->fileName, "r+");   //use the read/write mode to open the file
+    if(fgroup8 == NULL)   //verify that the file was successfully opened
     {
        return RC_FILE_NOT_FOUND;
     }
@@ -160,7 +159,7 @@ extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
        if (fputc(*bufferPtr, fgroup8) == EOF)
        {
           fclose(fgroup8);  //close the file if writing fails
-          return RC_WRITE_ERROR;
+          return RC_WRITE_FAILED;
        }
        bufferPtr++;
     }
@@ -171,16 +170,18 @@ extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
 }
 
 
-extern RC WriteCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle *memPage)
+extern RC WriteCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
     int currentPageNumber = fHandle->curPagePos / PAGE_SIZE;   //Determine the current page's index by using the file position as a guide
 
     char *bufferPtr = memPage;   //Set bufferPtr to point to the start of memPage
+    FILE *fgroup8 = fopen(fHandle->fileName, "r+");   //use the read/write mode to open the file
+
     for (int index = 0; index < PAGE_SIZE; index++)
     {
        if (fputc(*bufferPtr, fgroup8) == EOF)
        {
-          return RC_WRITE_ERROR;   //Return an error code if the write operation fails
+          return RC_WRITE_FAILED;   //Return an error code if the write operation fails
        }
        bufferPtr++;
     }
@@ -190,16 +191,17 @@ extern RC WriteCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle *memPage)
 }
 
 
-extern RC apendEmptyBlock(SM_FileHandle *fHandle)
+extern RC appendEmptyBlock(SM_FileHandle *fHandle)
 {
     SM_PageHandle emptyBlock = (SM_PageHandle)calloc(PAGE_SIZE, sizeof(char));   //Set memory to zero and allocate space for a data page
     char *blockPtr = emptyBlock;   //Assign blockPtr to the start of the recently allocated memory block
+    FILE *fgroup8 = fopen(fHandle->fileName, "r+");   //use the read/write mode to open the file
     for (int index = 0; index < PAGE_SIZE; index++)
     {
        if (fputc(0, fgroup8) == EOF)   //In order to detect write failures, write a zero byte to the file
        {
           free(emptyBlock);
-          return RC_WRITE_ERROR;   //In order to signal the write failure, return an error code
+          return RC_WRITE_FAILED;   //In order to signal the write failure, return an error code
        }
        blockPtr++;
     }
@@ -216,9 +218,8 @@ extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
         FILE *fgroup8 = fopen(fHandle->fileName, "r+");
         if (fgroup8 == NULL)
         {
-            return RC_FILE_NOT_FOUND_ERROR; 
+            return RC_FILE_NOT_FOUND; 
         }
-
         while (fHandle->totalNumPages < numberOfPages)
         {
             RC result = appendEmptyBlock(fHandle);
@@ -234,7 +235,3 @@ extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
 
     return RC_OK; 
 }
-    
-
-
-           

@@ -83,14 +83,35 @@ RC destroyPageFile(char *fileName)
     return RC_OK;//file successfully deleted
 }
 
-RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage )
+RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) 
 {
-    //The method reads the block at position pageNum from a file and stores its content in the memory pointed to by the memPage page handle.
-    //If the file has less than pageNum pages, the method should return RC READ NON EXISTING PAGE
-    if(fHandle->totalNumPages<pageNum)
-        return RC_READ_NON_EXISTING_PAGE;
-    
+    if (pageNum >= fHandle->totalNumPages || pageNum < 0) 
+    {
+        return RC_READ_NON_EXISTING_PAGE; // Return error if the requested page doesn't exist
+    }
+
+    FILE *file = (FILE *)fHandle->mgmtInfo; // Use the mgmtInfo as a file pointer
+
+    // Calculate the offset (position in the file) to the start of the page
+    int offset = pageNum * PAGE_SIZE;
+
+    // Move the file pointer to the correct position (beginning of the requested page)
+    if (fseek(file, offset, SEEK_SET) != 0) 
+    {
+        return RC_FILE_SEEK_ERROR; // Return an error if the seek fails
+    }
+
+    // Read the page into the memory buffer
+    size_t bytesRead = fread(memPage, sizeof(char), PAGE_SIZE, file);
+    if (bytesRead < PAGE_SIZE) 
+    {
+        return RC_READ_NON_EXISTING_PAGE; // Return error if the full page wasn't read
+    }
+
+    fHandle->curPagePos = pageNum; // Update the current page position
+    return RC_OK; // Return success
 }
+
 
 extern int getBlockPos(SM_FileHandle *fHandle )//return the position of the page
 {

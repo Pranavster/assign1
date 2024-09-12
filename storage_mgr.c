@@ -19,13 +19,13 @@ RC createPageFile(char *fileName)
     memset(ptr, '\0', PAGE_SIZE);//the file will be empty
     FILE *file = fopen(fileName,"w+");//open file with writing permissions, or return that it is not found
     if (file == NULL) 
-        return RC_WRITE_FAILED;
+        return RC_FILE_HANDLE_NOT_INIT;
     char *emptyPage = (char *)calloc(PAGE_SIZE, sizeof(char));//create and fill the empty page with the contents of the page file
     if(emptyPage == NULL)
         return RC_FILE_NOT_FOUND;
-    if( fwrite(emptyPage, sizeof(char), PAGE_SIZE, file)<PAGE_SIZE)
+    if(fwrite(emptyPage, sizeof(char), PAGE_SIZE, file)<PAGE_SIZE)
     {
-        
+        RC_WRITE_FAILED;
     }
     free(emptyPage);//free memory of emptyPage
     //fHandle->totalNumPages+=1;//notify the total number of pages has increased
@@ -63,6 +63,7 @@ RC closePageFile(SM_FileHandle *fHandle)
     return RC_OK;
 
 }
+
 RC destroyPageFile(char *fileName)
 {
     SM_FileHandle fHandle;
@@ -98,7 +99,7 @@ RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
     // Move the file pointer to the correct position (beginning of the requested page)
     if (fseek(file, offset, SEEK_SET) != 0) 
     {
-        return RC_FILE_SEEK_ERROR; // Return an error if the seek fails
+        return RC_FILE_NOT_FOUND; // Return an error if the seek fails
     }
 
     // Read the page into the memory buffer
@@ -117,39 +118,6 @@ extern int getBlockPos(SM_FileHandle *fHandle )//return the position of the page
 {
     return fHandle->curPagePos;
 }
-int main() 
-{
-    SM_FileHandle fHandle1,fHandle2;
-
-    RC crpf1_result = createPageFile("gerald.txt");//Testing creation of file
-    RC crpf2_result = createPageFile("sharandeep.txt");//Testing creation of file
-    RC opf1_result = openPageFile("gerald.txt",&fHandle1);
-    RC opf2_result = openPageFile("sharandeep.txt",&fHandle2);
-    if(opf1_result==RC_OK)
-    {
-        printf("File successfully opened");
-        printf("Filename %s\n",fHandle1.fileName);
-        printf("Current page position %d\n",fHandle1.curPagePos);
-        printf("Total amount of pages %d\n",fHandle1.totalNumPages);
-    }
-    else
-    {
-        printf("File unsuccessfully opened, result is %d\n",opf1_result);
-    }
-    if(opf2_result==RC_OK)
-    {
-        printf("File successfully opened");
-        printf("Filename %s\n",fHandle2.fileName);
-        printf("Current page position %d\n",fHandle2.curPagePos);
-        printf("Total amount of pages %d\n",fHandle2.totalNumPages);
-    }
-    else
-    {
-        printf("File unsuccessfully opened, result is %d\n",opf2_result);
-    }
-    printf("%d",getBlockPos(&fHandle2));
-}
-
 
 RC readFirstBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) 
 {
@@ -268,7 +236,7 @@ extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
        }
        bufferPtr++;
     }
-    fHandle->curPagePos = ftell(fgroup8);
+    fHandle->curPagePos = ftell(fgroup8); // writes the contents of fgroup8 to curPagePos, then closes the file
     fclose(fgroup8);
 
     return RC_OK;
@@ -318,14 +286,14 @@ extern RC appendEmptyBlock(SM_FileHandle *fHandle)
 
 extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
 {
-    if (numberOfPages > fHandle->totalNumPages)
+    if(numberOfPages > fHandle->totalNumPages) 
     {
         FILE *fgroup8 = fopen(fHandle->fileName, "r+");
-        if (fgroup8 == NULL)
+        if(fgroup8 == NULL)
         {
             return RC_FILE_NOT_FOUND; 
         }
-        while (fHandle->totalNumPages < numberOfPages)
+        while(fHandle->totalNumPages < numberOfPages)
         {
             RC result = appendEmptyBlock(fHandle);
             if (result != RC_OK)
@@ -339,4 +307,37 @@ extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
     }
 
     return RC_OK; 
+}
+
+int main() 
+{
+    SM_FileHandle fHandle1,fHandle2;
+
+    RC crpf1_result = createPageFile("gerald.txt");//Testing creation of file
+    RC crpf2_result = createPageFile("sharandeep.txt");//Testing creation of file
+    RC opf1_result = openPageFile("gerald.txt",&fHandle1);
+    RC opf2_result = openPageFile("sharandeep.txt",&fHandle2);
+    if(opf1_result==RC_OK)
+    {
+        printf("File successfully opened");
+        printf("Filename %s\n",fHandle1.fileName);
+        printf("Current page position %d\n",fHandle1.curPagePos);
+        printf("Total amount of pages %d\n",fHandle1.totalNumPages);
+    }
+    else
+    {
+        printf("File unsuccessfully opened, result is %d\n",opf1_result);
+    }
+    if(opf2_result==RC_OK)
+    {
+        printf("File successfully opened");
+        printf("Filename %s\n",fHandle2.fileName);
+        printf("Current page position %d\n",fHandle2.curPagePos);
+        printf("Total amount of pages %d\n",fHandle2.totalNumPages);
+    }
+    else
+    {
+        printf("File unsuccessfully opened, result is %d\n",opf2_result);
+    }
+    printf("%d",getBlockPos(&fHandle2));
 }

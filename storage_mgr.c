@@ -112,17 +112,6 @@ RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
     return RC_OK; // Return success
 }
 
-RC readFirstBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) 
-{
-    // Check if the file handle is initialized
-    if (fHandle == NULL || fHandle->mgmtInfo == NULL) 
-    {
-        return RC_FILE_HANDLE_NOT_INIT; // Return error if the file handle is not initialized
-    }
-
-    // Attempt to read the first block (pageNum = 0)
-    return readBlock(0, fHandle, memPage); // Use the existing readBlock function to read the first page
-}
 
 extern int getBlockPos(SM_FileHandle *fHandle )//return the position of the page
 {
@@ -161,6 +150,19 @@ int main()
     printf("%d",getBlockPos(&fHandle2));
 }
 
+
+RC readFirstBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) 
+{
+    // Check if the file handle is initialized
+    if (fHandle == NULL || fHandle->mgmtInfo == NULL) 
+    {
+        return RC_FILE_HANDLE_NOT_INIT; // Return error if the file handle is not initialized
+    }
+
+    // Attempt to read the first block (pageNum = 0)
+    return readBlock(0, fHandle, memPage); // Use the existing readBlock function to read the first page
+}
+
 extern RC readLastBlock(SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
     if (fHandle->totalNumPages == 0)   //Verify that the file handle has 0 pages in total
@@ -173,6 +175,77 @@ int isPageNumberValid(int pageNum, SM_FileHandle *fHandle)   //given page number
 {
     return((pageNum >= fHandle->totalNumPages || pageNum < 0) ? 0 : 1);   //Return 0 if invalid, 1 if valid
 }
+
+RC readPreviousBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) 
+{
+    // Check if the file handle is initialized
+    if (fHandle == NULL || fHandle->mgmtInfo == NULL) 
+    {
+        return RC_FILE_HANDLE_NOT_INIT; // Return error if the file handle is not initialized
+    }
+
+    // Calculate the previous page number
+    int prevPageNum = fHandle->curPagePos - 1;
+
+    // Check if the previous page number is valid
+    if (prevPageNum < 0) 
+    {
+        return RC_READ_NON_EXISTING_PAGE; // Return error if trying to read before the first page
+    }
+
+    // Attempt to read the previous block
+    RC result = readBlock(prevPageNum, fHandle, memPage);
+    if (result == RC_OK) 
+    {
+        fHandle->curPagePos = prevPageNum; // Update the current page position
+    }
+    return result;
+}
+
+RC readCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) 
+{
+    // Check if the file handle is initialized
+    if (fHandle == NULL || fHandle->mgmtInfo == NULL) 
+    {
+        return RC_FILE_HANDLE_NOT_INIT; // Return error if the file handle is not initialized
+    }
+
+    // Attempt to read the current block
+    RC result = readBlock(fHandle->curPagePos, fHandle, memPage);
+    if (result == RC_OK) 
+    {
+        // No need to update curPagePos, as it is already pointing to the current page
+    }
+    return result;
+}
+
+RC readNextBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) 
+{
+    // Check if the file handle is initialized
+    if (fHandle == NULL || fHandle->mgmtInfo == NULL) 
+    {
+        return RC_FILE_HANDLE_NOT_INIT; // Return error if the file handle is not initialized
+    }
+
+    // Calculate the next page number
+    int nextPageNum = fHandle->curPagePos + 1;
+
+    // Check if the next page number is valid
+    if (nextPageNum >= fHandle->totalNumPages) 
+    {
+        return RC_READ_NON_EXISTING_PAGE; // Return error if trying to read beyond the last page
+    }
+
+    // Attempt to read the next block
+    RC result = readBlock(nextPageNum, fHandle, memPage);
+    if (result == RC_OK) 
+    {
+        fHandle->curPagePos = nextPageNum; // Update the current page position
+    }
+    return result;
+}
+
+
 extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
     if (!isPageNumberValid(PageNum, fHandle))   //verify the page number

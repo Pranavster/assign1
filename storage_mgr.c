@@ -112,6 +112,17 @@ RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
     return RC_OK; // Return success
 }
 
+RC readFirstBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) 
+{
+    // Check if the file handle is initialized
+    if (fHandle == NULL || fHandle->mgmtInfo == NULL) 
+    {
+        return RC_FILE_HANDLE_NOT_INIT; // Return error if the file handle is not initialized
+    }
+
+    // Attempt to read the first block (pageNum = 0)
+    return readBlock(0, fHandle, memPage); // Use the existing readBlock function to read the first page
+}
 
 extern int getBlockPos(SM_FileHandle *fHandle )//return the position of the page
 {

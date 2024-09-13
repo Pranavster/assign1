@@ -286,24 +286,24 @@ extern RC appendEmptyBlock(SM_FileHandle *fHandle)
 
 extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
 {
-    if(numberOfPages > fHandle->totalNumPages) 
+    if(numberOfPages > fHandle->totalNumPages)   //Verify whether the needed number of pages exceeds the entire number of pages in the document
     {
-        FILE *fgroup8 = fopen(fHandle->fileName, "r+");
-        if(fgroup8 == NULL)
+        FILE *fgroup8 = fopen(fHandle->fileName, "r+");   //Open the file with both reading and writing permissions ("r+")
+        if(fgroup8 == NULL)   //Verify that the file was opened successfully
         {
             return RC_FILE_NOT_FOUND; 
         }
-        while(fHandle->totalNumPages < numberOfPages)
+        while(fHandle->totalNumPages < numberOfPages)   //Until the total number of pages equals the necessary number of pages, keep adding blank blocks
         {
-            RC result = appendEmptyBlock(fHandle);
+            RC result = appendEmptyBlock(fHandle);   //Add a blank page or block to the file
             if (result != RC_OK)
             {
-                fclose(fgroup8); 
+                fclose(fgroup8);   //If the add operation fails, close the file and return the error code
                 return result; 
             }
         }
 
-        fclose(fgroup8);
+        fclose(fgroup8);   //After you've successfully added the necessary blank blocks, close the file
     }
 
     return RC_OK; 

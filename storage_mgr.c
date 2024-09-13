@@ -9,8 +9,7 @@ void initStorageManager(void) {
     fHandle->fileName = " ";
     fHandle->curPagePos = 0;
     fHandle->totalNumPages = 0;//get the total number of pages
-    fHandle->mgmtInfo = NULL;
-    printf("\npingpong\n");*/
+    fHandle->mgmtInfo = NULL;*/
 }
 
 RC createPageFile(char *fileName)
@@ -78,7 +77,6 @@ RC destroyPageFile(char *fileName)
     }
     if(remove(fileName)!=0)//remove the page and return RC_FILE_NOT_FOUND if there was a failure
     {
-        printf("\nc\n");
         return RC_FILE_NOT_FOUND;
     }
     return RC_OK;//file successfully deleted
@@ -309,7 +307,7 @@ extern RC ensureCapacity(int numberOfPages, SM_FileHandle *fHandle)
     return RC_OK; 
 }
 
-int main() 
+/*int main() 
 {
     SM_FileHandle fHandle1,fHandle2;
 
@@ -340,4 +338,4 @@ int main()
         printf("File unsuccessfully opened, result is %d\n",opf2_result);
     }
     printf("%d",getBlockPos(&fHandle2));
-}
+}*/

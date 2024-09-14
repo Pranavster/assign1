@@ -41,7 +41,7 @@ RC openPageFile(char *fileName, SM_FileHandle *fHandle)
     fHandle->curPagePos = 0;
     fseek(file, 0, SEEK_END);//move the file pointer to the end of the file
     long int totalFileSize = ftell(file);//get the total size of the file
-    printf("\nFile size:%d\n",totalFileSize);
+    printf("\nFile size:%ld\n",totalFileSize);
     fHandle->totalNumPages = totalFileSize / PAGE_SIZE;//get the total number of pages
     fHandle->mgmtInfo = file;
     return RC_OK;
@@ -212,7 +212,7 @@ RC readNextBlock(SM_FileHandle *fHandle, SM_PageHandle memPage)
 }
 
 
-extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
+extern RC writeBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
     if (!isPageNumberValid(PageNum, fHandle))   //verify the page number
     {
@@ -241,9 +241,9 @@ extern RC WriteBlock(int PageNum, SM_FileHandle *fHandle, SM_PageHandle memPage)
 }
 
 
-extern RC WriteCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle memPage)
+extern RC writeCurrentBlock(SM_FileHandle *fHandle, SM_PageHandle memPage)
 {
-    int currentPageNumber = fHandle->curPagePos / PAGE_SIZE;   //Determine the current page's index by using the file position as a guide
+    // int currentPageNumber = fHandle->curPagePos / PAGE_SIZE;   //Determine the current page's index by using the file position as a guide
 
     char *bufferPtr = memPage;   //Set bufferPtr to point to the start of memPage
     FILE *fgroup8 = fopen(fHandle->fileName, "r+");   //use the read/write mode to open the file

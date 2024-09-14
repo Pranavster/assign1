@@ -1,2 +1,1 @@
-# assign1
-This program reads blocks into memory and writes them on a disk
+"# CS525-F24-G08" 

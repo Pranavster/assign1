@@ -7,6 +7,7 @@
 #include "dberror.h"
 #include "test_helper.h"
 
+
 // test name
 char *testName;
 
@@ -18,8 +19,7 @@ static void testCreateOpenClose(void);
 static void testSinglePageContent(void);
 
 /* main function running all tests */
-int
-main (void)
+int main(void)
 {
   testName = "";
   
@@ -34,8 +34,7 @@ main (void)
 
 /* check a return code. If it is not RC_OK then output a message, error description, and exit */
 /* Try to create, open, and close a page file */
-void
-testCreateOpenClose(void)
+void testCreateOpenClose(void)
 {
   SM_FileHandle fh;
 
@@ -58,8 +57,7 @@ testCreateOpenClose(void)
 }
 
 /* Try to create, open, and close a page file */
-void
-testSinglePageContent(void)
+void testSinglePageContent(void)
 {
   SM_FileHandle fh;
   SM_PageHandle ph;
